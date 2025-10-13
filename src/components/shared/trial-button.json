@@ -1,0 +1,17 @@
+{
+  "collectionName": "components_shared_trial_buttons",
+  "info": {
+    "displayName": "Trial Button",
+    "icon": "scissors"
+  },
+  "options": {},
+  "attributes": {
+    "boolean": {
+      "type": "boolean"
+    },
+    "trial_button": {
+      "type": "string"
+    }
+  },
+  "config": {}
+}
