@@ -6,3 +6,4 @@ Dockerfile
 .dockerignore
 .env
 .tmp
+database/*.db

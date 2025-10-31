@@ -1,0 +1,96 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: cms-admin
+  annotations:
+    run.googleapis.com/launch-stage: BETA
+spec:
+  template:
+    metadata:
+      annotations:
+        run.googleapis.com/execution-environment: gen2
+        run.googleapis.com/invoker-iam-disabled: 'true'
+    spec:
+      serviceAccountName: cms-cloudrun@strapi-cms-poc-476303.iam.gserviceaccount.com
+      containers:
+        - name: cms-strapi
+          image: asia-south1-docker.pkg.dev/strapi-cms-poc-476303/cms-admin/strapi-admin:latest # Replace with your image
+          ports:
+            - containerPort: 1337
+              name: http1
+
+          env:
+            # Direct environment variable
+            - name: CLIENT_URL
+              value: "https://your-client-url.com" # Replace with your actual client URL
+
+            # Secrets from Secret Manager
+            - name: APP_KEYS
+              valueFrom:
+                secretKeyRef:
+                  name: strapi-app-keys
+                  key: latest
+
+            - name: API_TOKEN_SALT
+              valueFrom:
+                secretKeyRef:
+                  name: strapi-api-token-salt
+                  key: latest
+
+            - name: ADMIN_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: strapi-admin-jwt-secret
+                  key: latest
+
+            - name: TRANSFER_TOKEN_SALT
+              valueFrom:
+                secretKeyRef:
+                  name: strapi-transfer-token-salt
+                  key: latest
+
+            - name: ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: strapi-encryption-key
+                  key: latest
+
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: strapi-jwt-secret
+                  key: latest
+
+            - name: PREVIEW_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: strapi-preview-secret
+                  key: latest
+
+            # Database configuration
+            - name: DATABASE_CLIENT
+              value: "sqlite"
+            - name: DATABASE_FILENAME
+              value: "/data/database/data.db"
+
+          resources:
+            limits:
+              cpu: "1"
+              memory: "512Mi"
+
+          volumeMounts:
+            - name: gcs-database
+              mountPath: /app/data # This is the mount point in the container filesystem
+
+      volumes:
+        - name: gcs-database
+          csi:
+            driver: gcsfuse.run.googleapis.com
+            readOnly: false
+            volumeAttributes:
+              bucketName: cms_data_website # Your bucket name
+              mountOptions: "implicit-dirs"
+
+  traffic:
+    - percent: 100
+      latestRevision: true
